@@ -47,7 +47,8 @@ LeptonThread::LeptonThread() : QThread()
 
 	// CURL 초기화
 	curl = curl_easy_init();
-	cloud_url = "https://34.64.132.115:5000/";
+	// 실제 서버 IP와 포트로 변경하세요
+	cloud_url = "http://34.64.95.122:3000/temperature";  // 예시 IP입니다. 실제 IP로 변경하세요
 }
 
 LeptonThread::~LeptonThread() {
@@ -134,7 +135,7 @@ void LeptonThread::sendTemperatureToCloud(float temperature)
 		Json::Value root;
 		root["temperature"] = temperature;
 		root["timestamp"] = (Json::Value::Int64)time(NULL);
-		root["device_id"] = "lepton_2.5_001"; // 디바이스 고유 ID
+		root["device_id"] = "lepton_2.5_001";
 		
 		std::string jsonString = root.toStyledString();
 		
@@ -155,8 +156,8 @@ void LeptonThread::sendTemperatureToCloud(float temperature)
 		// 요청 보내기
 		CURLcode res = curl_easy_perform(curl);
 		if(res != CURLE_OK) {
-			log_message(3, "Failed to send data to cloud: " + 
-					   std::string(curl_easy_strerror(res)));
+			fprintf(stderr, "Failed to send data: %s\n", 
+					curl_easy_strerror(res));
 		}
 		
 		curl_slist_free_all(headers);
@@ -342,7 +343,7 @@ void LeptonThread::run()
 					// 클라우드로 전송 (예: 1초마다)
 					static time_t lastSendTime = 0;
 					time_t currentTime = time(NULL);
-					if(currentTime - lastSendTime >= 1) {
+					if(currentTime - lastSendTime >= 10) {
 						sendTemperatureToCloud(temperature);
 						lastSendTime = currentTime;
 					}
